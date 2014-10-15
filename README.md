@@ -1,10 +1,10 @@
-journey_list
+absence_manager
 ============
 
-Journey List MyBB Plugin
+Absence Manager MyBB Plugin
 
-journey_list is a plugin for the MyBB which provides the possibility for users, to add their
-journeys to a list of journeys of the board members.
+absence_manager is a plugin for the MyBB which provides the possibility for users,
+to add all their absences to a list of the absences of the board members.
 The plugin in the successor of the famous "Awaylist" and "Abwesenheitsliste" plugins.
 
 
