@@ -7,6 +7,8 @@ absence_manager is a plugin for the MyBB which provides the possibility for user
 to add all their absences to a list of the absences of the board members.
 The plugin in the successor of the famous "Awaylist" and "Abwesenheitsliste" plugins.
 
+The plugin is compatible with the built in MyBB Away function for users.
+
 
 Installation
 ============
