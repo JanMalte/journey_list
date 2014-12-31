@@ -139,6 +139,171 @@ if (!function_exists('absencemanager_uninstall')) {
     }
 }
 
+if (!function_exists('absencemanager_activate')) {
+
+    /**
+     * Called whenever a plugin is activated via the Admin CP.
+     * This should essentially make a plugin "visible" by adding
+     * templates/template changes, language changes etc.
+     *
+     * @global mixed $db
+     * @global mixed $mybb
+     *
+     * @return void
+     */
+    function absencemanager_activate()
+    {
+        global $db, $mybb;
+
+        require MYBB_ROOT . '/inc/adminfunctions_templates.php';
+
+        // Add settings
+        $absencemanagerSettingsGroup = array(
+            'name' => 'absencemanager',
+            'title' => 'Absence Manager',
+            'description' => 'Settings for the Absence Manager plugin.',
+        );
+        $db->insert_query('settinggroups', $absencemanagerSettingsGroup);
+        $settingsGroupId = $db->insert_id();
+
+        $enablePluginSetting = array(
+            'name' => 'absencemanager_enable',
+            'title' => 'Enable/Disable',
+            'description' => 'Do you want to enable the Absence Manager?',
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'disporder' => '1',
+            'gid' => intval($settingsGroupId),
+        );
+        $db->insert_query('settings', $enablePluginSetting);
+        
+        $onlyMembersSetting = array(
+            'name' => 'absencemanager_only_members',
+            'title' => 'Only for members',
+            'description' => 'Should the list only be visible for members?',
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'disporder' => '2',
+            'gid' => intval($settingsGroupId)
+        );
+        $db->insert_query('settings', $onlyMembersSetting);
+
+        $showOnIndexSetting = array(
+            'name' => 'absencemanager_show_on_index',
+            'title' => 'Show on index',
+            'description' => 'Should the list be shown on the index page?',
+            'optionscode' => 'yesno',
+            'value' => '0',
+            'disporder' => '3',
+            'gid' => intval($settingsGroupId)
+        );
+        $db->insert_query('settings', $showOnIndexSetting);
+
+        // Rebuild settings
+        rebuild_settings();
+
+        // Convert native away settings of users into absence items
+        convert_native_awaysettings();
+    }
+}
+
+if (!function_exists('absencemanager_deactivate')) {
+
+    /**
+     * Called whenever a plugin is deactivated. This should essentially "hide"
+     * the plugin from view by removing templates/template changes etc.
+     *
+     * It should not, however, remove any information such as tables, fields
+     * etc - that should be handled by an _uninstall routine. When a plugin is
+     * uninstalled, this routine will also be called before _uninstall() if
+     * the plugin is active.
+     *
+     * @global mixed $db
+     * @global mixed $mybb
+     *
+     * @return void
+     */
+    function absencemanager_deactivate()
+    {
+        global $db, $mybb;
+
+        require MYBB_ROOT . '/inc/adminfunctions_templates.php';
+
+        // Remove plugin settings
+        $query = $db->simple_select(
+            'settinggroups',
+            'gid',
+            'name="absencemanager"'
+        );
+        $settingsGroupId = (int) $db->fetch_field($query, 'gid');
+        $db->delete_query('settinggroups', 'gid=' . $settingsGroupId);
+        $db->delete_query('settings', 'gid=' . $settingsGroupId);
+
+        // Rebuild settings
+        rebuild_settings();
+    }
+}
+
+if (!function_exists('convert_native_awaysettings')) {
+
+    /**
+     * Convert the native away settings into absence items.
+     *
+     * @global mixed $db
+     *
+     * @return void
+     */
+    function convert_native_awaysettings()
+    {
+        global $db;
+
+        // Find all native away settings
+        $query = $db->simple_select(
+            'users',
+            'uid, awaydate, returndate, awayreason',
+            'away != 0'
+        );
+
+        // Convert the away settings of each user
+        while($user = $db->fetch_array($query))
+        {
+            // Find the current absence
+            $absence = find_current_absence($user['uid'], $user['awaydate']);
+
+            // Create a timestamp for the end of the absence
+            $returnTimestamp = null;
+            if (!empty($user['returndate'])) {
+                $parsedString = explode('-', $user['returndate']);
+                $returnTimestamp = gmmktime(
+                    0,
+                    0,
+                    0,
+                    $parsedString[0],
+                    $parsedString[1],
+                    $parsedString[2]
+                );
+            }
+
+            // Add a new absence for the user
+            if (empty($absence)) {
+                add_new_absence(
+                    $user['uid'],
+                    $user['awaydate'],
+                    $returnTimestamp,
+                    $user['awayreason']
+                );
+            } else {
+                update_absence(
+                    $absence['id'],
+                    $user['awaydate'],
+                    $returnTimestamp,
+                    $user['awayreason']
+                );
+            }
+        }
+    }
+}
+
 /*
  * ************************************
  * Plugin core functions
@@ -291,12 +456,12 @@ if (!function_exists('save_absence_by_native_away_setting')) {
         $absence = find_current_absence($mybb->user['uid'], TIME_NOW);
 
         // Create a timestamp for the end of the absence
-        $returntimestamp = null;
+        $returnTimestamp = null;
         if (!empty($mybb->input['awayday'])) {
             $return_month = (int) substr($mybb->get_input('awaymonth'), 0, 2);
             $return_day = (int) substr($mybb->get_input('awayday'), 0, 2);
             $return_year = min((int) $mybb->get_input('awayyear'), 9999);
-            $returntimestamp = gmmktime(0, 0, 0, $return_month, $return_day, $return_year);
+            $returnTimestamp = gmmktime(0, 0, 0, $return_month, $return_day, $return_year);
         }
 
         // Add a new absence for the user
@@ -304,14 +469,14 @@ if (!function_exists('save_absence_by_native_away_setting')) {
             add_new_absence(
                 $mybb->user['uid'],
                 TIME_NOW,
-                $returntimestamp,
+                $returnTimestamp,
                 $away['awayreason']
             );
         } else {
             update_absence(
                 $absence['id'],
                 $absence['start'],
-                $returntimestamp,
+                $returnTimestamp,
                 $away['awayreason']
             );
         }
