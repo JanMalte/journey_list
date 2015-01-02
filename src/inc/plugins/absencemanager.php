@@ -31,6 +31,14 @@ $plugins->add_hook(
     'usercp_do_profile_end',
     'finish_absence_by_native_away_setting'
 );
+$plugins->add_hook(
+    'usercp_profile_end',
+    'change_away_section_content'
+);
+$plugins->add_hook(
+    'modcp_editprofile_end',
+    'change_away_section_content'
+);
 
 /*
  * ************************************
@@ -117,6 +125,92 @@ if (!function_exists('absencemanager_install')) {
             . 'PRIMARY KEY (id)'
             . ' ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_bin;';
         $db->write_query($createTableQuery);
+
+        // Add templates
+        $absencemanagerTemplateGroup = array(
+            'prefix' => 'absencemanager',
+            'title' => 'Absence Manager',
+        );
+        $db->insert_query('templategroups', $absencemanagerTemplateGroup);
+        $pageTemplate = array(
+            'sid' => '-2',
+            'version' => '1800',
+            'dateline' => time(),
+            'title' => 'absencemanager_page',
+            'template' => $db->escape_string('
+<html>
+<head>
+<title>{$mybb->settings[\'bbname\']} - {$lang->absencemanager_title}</title>
+{$headerinclude}
+</head>
+<body>
+{$header}
+{$multipage}
+{$absence_table}
+{$multipage}
+{$footer}
+</body>
+</html>
+'),
+        );
+        $db->insert_query('templates', $pageTemplate);
+        $tableTemplate = array(
+            'sid' => '-2',
+            'version' => '1800',
+            'dateline' => time(),
+            'title' => 'absencemanager_table',
+            'template' => $db->escape_string('
+<table cellspacing="0" cellpadding="5" border="0" class="tborder">
+    <tbody>
+        <tr>
+			<td colspan="4" class="thead"><strong>{$lang->absencemanager_table_headline}</strong></td>
+		</tr>
+		<tr>
+			<td align="center" class="tcat">
+                <span class="smalltext"><strong>{$lang->absencemanager_user}</strong></span>
+            </td>
+			<td align="center" class="tcat">
+                <span class="smalltext"><strong>{$lang->absencemanager_start}</strong></span>
+            </td>
+			<td align="center" class="tcat">
+                <span class="smalltext"><strong>{$lang->absencemanager_end}</strong></span>
+            </td>
+			<td width="50%" class="tcat">
+                <span class="smalltext"><strong>{$lang->absencemanager_reason}</strong></span>
+            </td>
+		</tr>
+		{$absence_rows}
+	</tbody>
+</table>
+'),
+        );
+        $db->insert_query('templates', $tableTemplate);
+        $tableRowTemplate = array(
+            'sid' => '-2',
+            'version' => '1800',
+            'dateline' => time(),
+            'title' => 'absencemanager_table_row',
+            'template' => $db->escape_string('
+<tr class="post">
+    <td class="post_author trow1">
+        {$absence[\'useravatar\']}
+        <div class="author_information">
+            <strong><span class="largetext">{$absence[\'profilelink\']}</span></strong>{$absence[\'onlinestatus\']}
+        </div>
+    </td>
+    <td align="center" class="trow2">
+        {$absence[\'start\']}
+    </td>
+    <td align="center" class="trow2">
+        {$absence[\'end\']}
+    </td>
+    <td width="50%" class="trow1">
+        {$absence[\'reason\']}
+    </td>
+</tr>
+'),
+        );
+        $db->insert_query('templates', $tableRowTemplate);
     }
 }
 
@@ -136,6 +230,8 @@ if (!function_exists('absencemanager_uninstall')) {
         global $db;
 
         $db->drop_table('userabsences');
+        $db->delete_query('templategroups', 'prefix="absencemanager"');
+        $db->delete_query('templates', 'title LIKE "absencemanager_%" AND sid=-2');
     }
 }
 
@@ -176,6 +272,19 @@ if (!function_exists('absencemanager_activate')) {
             'gid' => intval($settingsGroupId),
         );
         $db->insert_query('settings', $enablePluginSetting);
+
+        $replaceAwaySetting = array(
+            'name' => 'absencemanager_replace_native_away',
+            'title' => 'Replace native away setting',
+            'description' => 'Do you want to replace the native MyBB away '
+            . 'profile information by the absence information of the '
+            . 'Absence Manager plugin?',
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'disporder' => '2',
+            'gid' => intval($settingsGroupId),
+        );
+        $db->insert_query('settings', $replaceAwaySetting);
         
         $onlyMembersSetting = array(
             'name' => 'absencemanager_only_members',
@@ -183,7 +292,7 @@ if (!function_exists('absencemanager_activate')) {
             'description' => 'Should the list only be visible for members?',
             'optionscode' => 'yesno',
             'value' => '1',
-            'disporder' => '2',
+            'disporder' => '3',
             'gid' => intval($settingsGroupId)
         );
         $db->insert_query('settings', $onlyMembersSetting);
@@ -194,14 +303,25 @@ if (!function_exists('absencemanager_activate')) {
             'description' => 'Should the list be shown on the index page?',
             'optionscode' => 'yesno',
             'value' => '0',
-            'disporder' => '3',
+            'disporder' => '4',
             'gid' => intval($settingsGroupId)
         );
         $db->insert_query('settings', $showOnIndexSetting);
 
+        $showAvatarOnList = array(
+            'name' => 'absencemanager_show_avatars',
+            'title' => 'Show avatars in the absent list',
+            'description' => 'Should avatars be shown in the absent list?',
+            'optionscode' => 'yesno',
+            'value' => '1',
+            'disporder' => '5',
+            'gid' => intval($settingsGroupId)
+        );
+        $db->insert_query('settings', $showAvatarOnList);
+
         // Rebuild settings
         rebuild_settings();
-
+        
         // Convert native away settings of users into absence items
         convert_native_awaysettings();
     }
@@ -443,6 +563,12 @@ if (!function_exists('save_absence_by_native_away_setting')) {
         global $mybb;
         global $away;
 
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0
+            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            return;
+        }
+
         // If native away profile setting is true, add a new absence
         // for the user or update the existing one.
         if (!isset($away['away']) || 1 != $away['away']) {
@@ -499,6 +625,12 @@ if (!function_exists('finish_absence_by_native_away_setting')) {
         global $mybb;
         global $away;
 
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0
+            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            return;
+        }
+
         // Define the current time if not yet defined by MyBB
         defined('TIME_NOW') || define('TIME_NOW', time());
 
@@ -539,6 +671,12 @@ if (!function_exists('add_absence_profile_info')) {
         global $lang;
         global $uid;
 
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0
+            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            return;
+        }
+
         // Define the current time if not yet defined by MyBB
         defined('TIME_NOW') || define('TIME_NOW', time());
 
@@ -554,5 +692,30 @@ if (!function_exists('add_absence_profile_info')) {
 
             eval("\$awaybit = \"" . $templates->get("member_profile_away") . "\";");
         }
+    }
+}
+
+if (!function_exists('change_away_section_content')) {
+
+    /**
+     * Change the away section in the user CP
+     *
+     * @global mixed   $mybb
+     * @global string  $awaysection
+     *
+     * @return void
+     */
+    function change_away_section_content()
+    {
+        global $mybb;
+        global $awaysection;
+
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0
+            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            return;
+        }
+
+        $awaysection = '';
     }
 }
