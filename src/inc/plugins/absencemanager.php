@@ -39,6 +39,10 @@ $plugins->add_hook(
     'modcp_editprofile_end',
     'change_away_section_content'
 );
+$plugins->add_hook(
+    'index_end',
+    'show_absence_table_on_index'
+);
 
 /*
  * ************************************
@@ -161,10 +165,15 @@ if (!function_exists('absencemanager_install')) {
             'title' => 'absencemanager_table',
             'template' => $db->escape_string('
 <table cellspacing="0" cellpadding="5" border="0" class="tborder">
-    <tbody>
-        <tr>
-			<td colspan="4" class="thead"><strong>{$lang->absencemanager_table_headline}</strong></td>
-		</tr>
+    <thead>
+          <tr>
+              <td colspan="4" class="thead">
+                <strong>{$lang->absencemanager_table_headline}</strong>
+                <div class="expcolimage"><img title="[-]" alt="[-]" class="expander" id="absence_img" src="http://localhost/mybb/mybb18/images/collapse.png" style="cursor: pointer;"></div>
+            </td>
+          </tr>
+    </thead>
+    <tbody id="absence_e">
 		<tr>
 			<td align="center" class="tcat">
                 <span class="smalltext"><strong>{$lang->absencemanager_user}</strong></span>
@@ -666,10 +675,10 @@ if (!function_exists('add_absence_profile_info')) {
     function add_absence_profile_info()
     {
         global $mybb;
-        global $awaybit;
         global $templates;
-        global $lang;
         global $uid;
+        global $awaybit; // Used in templates
+        global $lang; // Used in templates
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
@@ -698,7 +707,7 @@ if (!function_exists('add_absence_profile_info')) {
 if (!function_exists('change_away_section_content')) {
 
     /**
-     * Change the away section in the user CP
+     * Change the away section in the user CP.
      *
      * @global mixed   $mybb
      * @global string  $awaysection
@@ -708,7 +717,7 @@ if (!function_exists('change_away_section_content')) {
     function change_away_section_content()
     {
         global $mybb;
-        global $awaysection;
+        global $awaysection; // Used in templates
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
@@ -717,5 +726,136 @@ if (!function_exists('change_away_section_content')) {
         }
 
         $awaysection = '';
+    }
+}
+
+if (!function_exists('show_absence_table_on_index')) {
+
+    /**
+     * Show the absence table on the index page.
+     *
+     * @global mixed  $mybb
+     * @global string $absencetable
+     *
+     * @return void
+     */
+    function show_absence_table_on_index()
+    {
+        global $mybb;
+        global $absencetable; // Used in templates
+
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0
+            || $mybb->settings['absencemanager_show_on_index'] == 0) {
+            return;
+        }
+
+        $absencetable = build_absence_table() . '<br />';
+    }
+}
+
+if (!function_exists('build_absence_table')) {
+
+    /**
+     * Build the absence table.
+     *
+     * @global mixed $mybb
+     * @global mixed $db
+     * @global mixed $templates
+     * @global mixed $lang
+     * @global mixed $theme
+     *
+     * @return void
+     */
+    function build_absence_table()
+    {
+        global $mybb;
+        global $db;
+        global $templates;
+        global $lang; // Used in templates
+        global $theme; // Used in templates
+
+        // Check if the plugin should replace the native away settings
+        if ($mybb->settings['absencemanager_enable'] == 0)
+        {
+            return;
+        }
+
+        // Define the current time if not yet defined by MyBB
+        defined('TIME_NOW') || define('TIME_NOW', time());
+        
+        // Load language used by this plugin
+        $lang->load("absencemanager");
+
+        // Count all items
+        $countQuery = $db->simple_select('userabsences', 'COUNT(id) AS items');
+        $itemCount = $db->fetch_field($countQuery, 'items');
+
+        // Multipage settings
+        $itemsPerPage = 15;
+        $currentPage = $mybb->get_input('page', 1);
+
+        // Generate multipage navigation
+        $multipage = multipage(
+            $itemCount, $itemsPerPage, $currentPage, THIS_SCRIPT . '?page={page}', false
+        );
+
+        // Query all items for the current page
+        $offset = $itemsPerPage * max(0, $currentPage - 1);
+        $query = $db->query("
+            SELECT a.*, u.*
+            FROM " . TABLE_PREFIX . "userabsences a
+            LEFT JOIN " . TABLE_PREFIX . "users u ON (u.uid=a.user_id)
+            WHERE 1=1
+            ORDER BY start ASC
+            LIMIT {$itemsPerPage} OFFSET {$offset}
+        ");
+
+        // Generate the table rows for each absence item
+        $absence_rows = '';
+        while ($absence = $db->fetch_array($query)) {
+            $user = get_user($absence['user_id']);
+
+            // Build the profil link
+            $user['username_formatted'] = format_name($user['username'], $user['usergroup'], $user['displaygroup']);
+            $absence['profilelink'] = build_profile_link($user['username_formatted'], $user['uid']);
+            // $post is needed for the postbit_avatar template
+            $post = array(
+                'profilelink_plain' => $mybb->settings['bburl'] . '/' . get_profile_link($user['uid']),
+            );
+
+            // Determine the status to show for the user (Online/Offline/Away)
+            $timecut = TIME_NOW - $mybb->settings['wolcutoff'];
+            if ($user['lastactive'] > $timecut && ($user['invisible'] != 1 || $mybb->usergroup['canviewwolinvis'] == 1) && $user['lastvisit'] != $user['lastactive']) {
+                eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_online") . "\";");
+            } else {
+                if ($absence['away'] == 1 && $mybb->settings['allowaway'] != 0) {
+                    eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_away") . "\";");
+                } else {
+                    eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_offline") . "\";");
+                }
+            }
+
+            // Build the user avatar
+            $absence['useravatar'] = '';
+            if (isset($mybb->user['showavatars']) && $mybb->user['showavatars'] != 0 || $mybb->user['uid'] == 0) {
+                $useravatar = format_avatar(htmlspecialchars_uni($user['avatar']), $user['avatardimensions'], $mybb->settings['postmaxavatarsize']);
+                eval("\$absence['useravatar'] = \"" . $templates->get("postbit_avatar") . "\";");
+            }
+            if ($mybb->settings['absencemanager_show_avatars'] == 0) {
+                $absence['useravatar'] = '';
+            }
+
+            // Format the dates
+            $absence['start_plain'] = $absence['start'];
+            $absence['start'] = my_date($mybb->settings['dateformat'], $absence['start']);
+            $absence['end_plain'] = $absence['end'];
+            $absence['end'] = my_date($mybb->settings['dateformat'], $absence['end']);
+
+            eval("\$absence_rows .= \"" . $templates->get("absencemanager_table_row") . "\";");
+        }
+        eval("\$absence_table = \"" . $templates->get("absencemanager_table") . "\";");
+        
+        return $absence_table;
     }
 }
