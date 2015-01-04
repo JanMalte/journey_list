@@ -650,6 +650,8 @@ if (!function_exists('add_absence_profile_info')) {
     /**
      * Add the absence info to the profile using the $awaybit placeholder.
      *
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+     *
      * @global mixed   $mybb
      * @global mixed   $templates
      * @global integer $uid
@@ -663,8 +665,8 @@ if (!function_exists('add_absence_profile_info')) {
         global $mybb;
         global $templates;
         global $uid;
-        global $awaybit; // Used in templates
-        global $lang; // Used in templates
+        global $awaybit; // Used in templates using eval()
+        global $lang; // Used in templates using eval()
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
@@ -682,6 +684,8 @@ if (!function_exists('add_absence_profile_info')) {
             $absence = find_current_absence($uid, TIME_NOW);
 
             // Get the absence info
+            // $awayreason, $awaydate and $returndate are used in
+            // templates using eval()
             $awayreason = $absence['reason'];
             $awaydate = my_date($mybb->settings['dateformat'], $absence['start']);
             $returndate = my_date($mybb->settings['dateformat'], $absence['end']);
@@ -745,6 +749,8 @@ if (!function_exists('build_absence_table')) {
     /**
      * Build the absence table.
      *
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+     *
      * @global mixed $mybb
      * @global mixed $db
      * @global mixed $templates
@@ -758,8 +764,8 @@ if (!function_exists('build_absence_table')) {
         global $mybb;
         global $db;
         global $templates;
-        global $lang; // Used in templates
-        global $theme; // Used in templates
+        global $lang; // Used in templates using eval()
+        global $theme; // Used in templates using eval()
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0) {
@@ -781,6 +787,7 @@ if (!function_exists('build_absence_table')) {
         $currentPage = $mybb->get_input('page', 1);
 
         // Generate multipage navigation
+        // $multipage is used in templates using eval()
         $multipage = multipage(
             $itemCount, $itemsPerPage, $currentPage, THIS_SCRIPT . '?page={page}', false
         );
@@ -797,6 +804,7 @@ if (!function_exists('build_absence_table')) {
         ");
 
         // Generate the table rows for each absence item
+        // $absence_rows is used in templates using eval()
         $absence_rows = '';
         while ($absence = $db->fetch_array($query)) {
             $user = get_user($absence['user_id']);
@@ -824,6 +832,7 @@ if (!function_exists('build_absence_table')) {
             // Build the user avatar
             $absence['useravatar'] = '';
             if (isset($mybb->user['showavatars']) && $mybb->user['showavatars'] != 0 || $mybb->user['uid'] == 0) {
+                // $useravatar is used in templates using eval()
                 $useravatar = format_avatar(htmlspecialchars_uni($user['avatar']), $user['avatardimensions'], $mybb->settings['postmaxavatarsize']);
                 eval("\$absence['useravatar'] = \"" . $templates->get("postbit_avatar") . "\";");
             }
@@ -839,6 +848,9 @@ if (!function_exists('build_absence_table')) {
 
             eval("\$absence_rows .= \"" . $templates->get("absencemanager_table_row") . "\";");
         }
+
+        // Load and evaluate the template
+        $absence_table = '';
         eval("\$absence_table = \"" . $templates->get("absencemanager_table") . "\";");
 
         return $absence_table;
