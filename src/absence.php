@@ -46,5 +46,5 @@ if ($mybb->settings['absencemanager_only_members'] && !$mybb->user['uid']) {
 $absence_table = build_absence_table();
 
 // Evaluate and output the page
-eval("\$absencemanager_page = \"" . $templates->get("absencemanager_page") . "\";");
+eval('$absencemanager_page = "' . $templates->get('absencemanager_page') . '";');
 output_page($absencemanager_page);
