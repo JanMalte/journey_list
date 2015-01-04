@@ -128,11 +128,11 @@ if (!function_exists('absencemanager_install')) {
         $db->write_query($createTableQuery);
 
         // Add templates
-        $absencemanagerTemplateGroup = array(
+        $templateGroup = array(
             'prefix' => 'absencemanager',
             'title' => 'Absence Manager',
         );
-        $db->insert_query('templategroups', $absencemanagerTemplateGroup);
+        $db->insert_query('templategroups', $templateGroup);
         $pageTemplate = array(
             'sid' => '-2',
             'version' => '1800',
@@ -257,12 +257,12 @@ if (!function_exists('absencemanager_activate')) {
         require MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
         // Add settings
-        $absencemanagerSettingsGroup = array(
+        $settingsGroup = array(
             'name' => 'absencemanager',
             'title' => 'Absence Manager',
             'description' => 'Settings for the Absence Manager plugin.',
         );
-        $db->insert_query('settinggroups', $absencemanagerSettingsGroup);
+        $db->insert_query('settinggroups', $settingsGroup);
         $settingsGroupId = $db->insert_id();
 
         $enablePluginSetting = array(
@@ -405,19 +405,9 @@ if (!function_exists('convert_native_awaysettings')) {
 
             // Add a new absence for the user
             if (empty($absence)) {
-                add_new_absence(
-                    $user['uid'],
-                    $user['awaydate'],
-                    $returnTimestamp,
-                    $user['awayreason']
-                );
+                add_new_absence($user['uid'], $user['awaydate'], $returnTimestamp, $user['awayreason']);
             } else {
-                update_absence(
-                    $absence['id'],
-                    $user['awaydate'],
-                    $returnTimestamp,
-                    $user['awayreason']
-                );
+                update_absence($absence['id'], $user['awaydate'], $returnTimestamp, $user['awayreason']);
             }
         }
     }
@@ -588,19 +578,9 @@ if (!function_exists('save_absence_by_native_away_setting')) {
 
         // Add a new absence for the user
         if (empty($absence)) {
-            add_new_absence(
-                $mybb->user['uid'],
-                TIME_NOW,
-                $returnTimestamp,
-                $away['awayreason']
-            );
+            add_new_absence($mybb->user['uid'], TIME_NOW, $returnTimestamp, $away['awayreason']);
         } else {
-            update_absence(
-                $absence['id'],
-                $absence['start'],
-                $returnTimestamp,
-                $away['awayreason']
-            );
+            update_absence($absence['id'], $absence['start'], $returnTimestamp, $away['awayreason']);
         }
     }
 }
