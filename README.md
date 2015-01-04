@@ -3,6 +3,10 @@ absence_manager
 
 Absence Manager MyBB Plugin
 
+[![Build Status](https://travis-ci.org/JanMalte/mybb_absence_manager.svg?branch=develop)](https://travis-ci.org/JanMalte/mybb_absence_manager)
+[![Code Coverage](https://scrutinizer-ci.com/g/JanMalte/mybb_absence_manager/badges/coverage.png?b=develop)](https://scrutinizer-ci.com/g/JanMalte/mybb_absence_manager/?branch=develop)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/JanMalte/mybb_absence_manager/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/JanMalte/mybb_absence_manager/?branch=develop)
+
 absence_manager is a plugin for the MyBB which provides the possibility for users,
 to add all their absences to a list of the absences of the board members.
 The plugin in the successor of the famous "Awaylist" and "Abwesenheitsliste" plugins.
