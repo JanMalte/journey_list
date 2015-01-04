@@ -690,7 +690,7 @@ if (!function_exists('add_absence_profile_info')) {
             $awaydate = my_date($mybb->settings['dateformat'], $absence['start']);
             $returndate = my_date($mybb->settings['dateformat'], $absence['end']);
 
-            eval("\$awaybit = \"" . $templates->get("member_profile_away") . "\";");
+            eval('$awaybit = "' . $templates->get('member_profile_away') . '";');
         }
     }
 }
@@ -776,7 +776,7 @@ if (!function_exists('build_absence_table')) {
         defined('TIME_NOW') || define('TIME_NOW', time());
 
         // Load language used by this plugin
-        $lang->load("absencemanager");
+        $lang->load('absencemanager');
 
         // Count all items
         $countQuery = $db->simple_select('userabsences', 'COUNT(id) AS items');
@@ -794,14 +794,14 @@ if (!function_exists('build_absence_table')) {
 
         // Query all items for the current page
         $offset = $itemsPerPage * max(0, $currentPage - 1);
-        $query = $db->query("
+        $query = $db->query('
             SELECT a.*, u.*
-            FROM " . TABLE_PREFIX . "userabsences a
-            LEFT JOIN " . TABLE_PREFIX . "users u ON (u.uid=a.user_id)
+            FROM ' . TABLE_PREFIX . 'userabsences a
+            LEFT JOIN ' . TABLE_PREFIX . 'users u ON (u.uid=a.user_id)
             WHERE 1=1
             ORDER BY start ASC
-            LIMIT {$itemsPerPage} OFFSET {$offset}
-        ");
+            LIMIT ' . $itemsPerPage . ' OFFSET '. $offset . '
+        ');
 
         // Generate the table rows for each absence item
         // $absence_rows is used in templates using eval()
@@ -820,12 +820,12 @@ if (!function_exists('build_absence_table')) {
             // Determine the status to show for the user (Online/Offline/Away)
             $timecut = TIME_NOW - $mybb->settings['wolcutoff'];
             if ($user['lastactive'] > $timecut && ($user['invisible'] != 1 || $mybb->usergroup['canviewwolinvis'] == 1) && $user['lastvisit'] != $user['lastactive']) {
-                eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_online") . "\";");
+                eval("\$absence['onlinestatus'] = \"" . $templates->get('postbit_online') . '";');
             } else {
                 if ($absence['away'] == 1 && $mybb->settings['allowaway'] != 0) {
-                    eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_away") . "\";");
+                    eval("\$absence['onlinestatus'] = \"" . $templates->get('postbit_away') . '";');
                 } else {
-                    eval("\$absence['onlinestatus'] = \"" . $templates->get("postbit_offline") . "\";");
+                    eval("\$absence['onlinestatus'] = \"" . $templates->get('postbit_offline') . '";');
                 }
             }
 
@@ -834,7 +834,7 @@ if (!function_exists('build_absence_table')) {
             if (isset($mybb->user['showavatars']) && $mybb->user['showavatars'] != 0 || $mybb->user['uid'] == 0) {
                 // $useravatar is used in templates using eval()
                 $useravatar = format_avatar(htmlspecialchars_uni($user['avatar']), $user['avatardimensions'], $mybb->settings['postmaxavatarsize']);
-                eval("\$absence['useravatar'] = \"" . $templates->get("postbit_avatar") . "\";");
+                eval("\$absence['useravatar'] = \"" . $templates->get('postbit_avatar') . '";');
             }
             if ($mybb->settings['absencemanager_show_avatars'] == 0) {
                 $absence['useravatar'] = '';
@@ -846,12 +846,12 @@ if (!function_exists('build_absence_table')) {
             $absence['end_plain'] = $absence['end'];
             $absence['end'] = my_date($mybb->settings['dateformat'], $absence['end']);
 
-            eval("\$absence_rows .= \"" . $templates->get("absencemanager_table_row") . "\";");
+            eval('$absence_rows .= "' . $templates->get('absencemanager_table_row') . '";');
         }
 
         // Load and evaluate the template
         $absence_table = '';
-        eval("\$absence_table = \"" . $templates->get("absencemanager_table") . "\";");
+        eval('$absence_table = "' . $templates->get('absencemanager_table') . '";');
 
         return $absence_table;
     }

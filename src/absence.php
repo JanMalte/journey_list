@@ -15,12 +15,12 @@ defined('IN_MYBB') || define('IN_MYBB', 1);
 defined('THIS_SCRIPT') || define('THIS_SCRIPT', 'absence.php');
 
 // Templates used by this page
-$templatelist = "absencemanager_page,absencemanager_list,absencemanager_list_row";
+$templatelist = 'absencemanager_page,absencemanager_list,absencemanager_list_row';
 
-require_once "./global.php";
+require_once './global.php';
 
 // Load language used by this plugin
-$lang->load("absencemanager");
+$lang->load('absencemanager');
 
 // Check if plugin is enabled
 if (!isset($mybb->settings['absencemanager_enable'])
