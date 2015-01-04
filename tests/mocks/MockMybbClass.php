@@ -38,6 +38,16 @@ class MockMybbClass
     public $user = array();
 
     /**
+     * Default settings container
+     *
+     * @var array
+     */
+    public $settings = array(
+        'absencemanager_enable' => true,
+        'absencemanager_replace_native_away' => true,
+    );
+
+    /**
      * Just do nothing, as this is just a mocking class.
      *
      * @param mixed $variableName

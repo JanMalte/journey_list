@@ -34,12 +34,15 @@ class RegisterHooksTest extends PHPUnit_Framework_TestCase
         $plugins = $this->getMock('MockPluginClass');
 
         // Configure the mock object
-        $plugins->expects($this->exactly(3))
+        $plugins->expects($this->exactly(6))
             ->method('add_hook')
             ->withConsecutive(
                  array('member_profile_end', 'add_absence_profile_info'),
                  array('usercp_do_profile_end', 'save_absence_by_native_away_setting'),
-                 array('usercp_do_profile_end', 'finish_absence_by_native_away_setting')
+                 array('usercp_do_profile_end', 'finish_absence_by_native_away_setting'),
+                 array('usercp_profile_end', 'change_away_section_content'),
+                 array('modcp_editprofile_end', 'change_away_section_content'),
+                 array('index_end', 'show_absence_table_on_index')
              );
 
         // Include the file to test

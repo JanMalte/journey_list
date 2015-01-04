@@ -96,8 +96,7 @@ class AddAbsenceProfileInfoTest extends TestCase
         // Prepare the global values
         $uid = $userId;
         $awaybit = null;
-        $mybb = new stdClass();
-        $mybb->settings = array('dateformat' => 'Y-m-d');
+        $mybb->settings['dateformat'] = 'Y-m-d';
 
         // Configure the mock objects
         $db->expects($this->atLeastOnce())
@@ -150,8 +149,7 @@ class AddAbsenceProfileInfoTest extends TestCase
         // Prepare the global values
         $uid = $userId;
         $awaybit = null;
-        $mybb = new stdClass();
-        $mybb->settings = array('dateformat' => 'Y-m-d');
+        $mybb->settings['dateformat'] = 'Y-m-d';
 
         // Configure the mock objects
         $db->expects($this->atLeastOnce())

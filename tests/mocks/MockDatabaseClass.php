@@ -135,4 +135,18 @@ class MockDatabaseClass
     {
         return;
     }
+
+	/**
+	 * Just do nothing, as this is just a mocking class.
+	 *
+	 * @param string The table name to perform the query on.
+	 * @param string An optional where clause for the query.
+	 * @param string An optional limit clause for the query.
+     *
+	 * @return void
+	 */
+	function delete_query($table, $where="", $limit="")
+	{
+		return;
+	}
 }

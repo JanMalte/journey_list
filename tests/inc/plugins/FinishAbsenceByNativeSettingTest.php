@@ -38,7 +38,6 @@ class FinishAbsenceByNativeSettingTest extends TestCase
         global $db, $away, $mybb;
 
         // Test values
-        $mybb = new \stdClass();
         $mybb->user = array('uid' => 123);
         $away = array('away' => 0);
 
