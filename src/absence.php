@@ -11,8 +11,8 @@
  * @since     2014-10-14
  */
 
-define('IN_MYBB', 1);
-define('THIS_SCRIPT', 'absence.php');
+defined('IN_MYBB') || define('IN_MYBB', 1);
+defined('THIS_SCRIPT') || define('THIS_SCRIPT', 'absence.php');
 
 // Templates used by this page
 $templatelist = "absencemanager_page,absencemanager_list,absencemanager_list_row";
