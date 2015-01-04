@@ -765,7 +765,7 @@ if (!function_exists('build_absence_table')) {
      * @global mixed $lang
      * @global mixed $theme
      *
-     * @return void
+     * @return string
      */
     function build_absence_table()
     {
