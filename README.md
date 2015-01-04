@@ -19,4 +19,5 @@ Installation
 
 Please use the provided released *.zip archives for quick installation of the plugin.
 The plugin is available in the mods sections of the MyBB sites:
-http://community.mybb.com/mods.php and https://www.mybboard.de/erweiterungen/
+http://community.mybb.com/mods.php
+https://www.mybboard.de/erweiterungen/
