@@ -50,7 +50,6 @@ $plugins->add_hook(
  * ************************************
  */
 if (!function_exists('absencemanager_info')) {
-
     /**
      * Get an array with the plugin information.
      *
@@ -78,13 +77,12 @@ if (!function_exists('absencemanager_info')) {
             'authorsite' => 'http://www.malte-gerth.de',
             'version' => '3.0.0-dev',
             'guid' => '',
-            'compatibility' => '18*'
+            'compatibility' => '18*',
         );
     }
 }
 
 if (!function_exists('absencemanager_is_installed')) {
-
     /**
      * Called on the plugin management page to establish if a plugin is already
      * installed or not.<br />
@@ -104,7 +102,6 @@ if (!function_exists('absencemanager_is_installed')) {
 }
 
 if (!function_exists('absencemanager_install')) {
-
     /**
      * Called whenever a plugin is installed by clicking the "Install" button in the
      * plugin manager.<br />
@@ -120,7 +117,7 @@ if (!function_exists('absencemanager_install')) {
         global $db;
 
         $createTableQuery = 'CREATE TABLE IF NOT EXISTS '
-            . $db->table_prefix . 'userabsences ( '
+            . $db->table_prefix.'userabsences ( '
             . 'id INT(10) NOT NULL auto_increment, '
             . 'user_id INT(10) NOT NULL, '
             . 'start INT(10) DEFAULT NULL, '
@@ -224,7 +221,6 @@ if (!function_exists('absencemanager_install')) {
 }
 
 if (!function_exists('absencemanager_uninstall')) {
-
     /**
      * Called whenever a plugin is to be uninstalled. This should remove ALL traces
      * of the plugin from the installation (tables etc). If it does not exist,
@@ -245,20 +241,18 @@ if (!function_exists('absencemanager_uninstall')) {
 }
 
 if (!function_exists('absencemanager_activate')) {
-
     /**
      * Called whenever a plugin is activated via the Admin CP.
      * This should essentially make a plugin "visible" by adding
      * templates/template changes, language changes etc.
      *
      * @global mixed $db
-     * @global mixed $mybb
      *
      * @return void
      */
     function absencemanager_activate()
     {
-        global $db, $mybb;
+        global $db;
 
         require MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
@@ -294,7 +288,7 @@ if (!function_exists('absencemanager_activate')) {
             'gid' => intval($settingsGroupId),
         );
         $db->insert_query('settings', $replaceAwaySetting);
-        
+
         $onlyMembersSetting = array(
             'name' => 'absencemanager_only_members',
             'title' => 'Only for members',
@@ -302,7 +296,7 @@ if (!function_exists('absencemanager_activate')) {
             'optionscode' => 'yesno',
             'value' => '1',
             'disporder' => '3',
-            'gid' => intval($settingsGroupId)
+            'gid' => intval($settingsGroupId),
         );
         $db->insert_query('settings', $onlyMembersSetting);
 
@@ -313,7 +307,7 @@ if (!function_exists('absencemanager_activate')) {
             'optionscode' => 'yesno',
             'value' => '0',
             'disporder' => '4',
-            'gid' => intval($settingsGroupId)
+            'gid' => intval($settingsGroupId),
         );
         $db->insert_query('settings', $showOnIndexSetting);
 
@@ -324,20 +318,19 @@ if (!function_exists('absencemanager_activate')) {
             'optionscode' => 'yesno',
             'value' => '1',
             'disporder' => '5',
-            'gid' => intval($settingsGroupId)
+            'gid' => intval($settingsGroupId),
         );
         $db->insert_query('settings', $showAvatarOnList);
 
         // Rebuild settings
         rebuild_settings();
-        
+
         // Convert native away settings of users into absence items
         convert_native_awaysettings();
     }
 }
 
 if (!function_exists('absencemanager_deactivate')) {
-
     /**
      * Called whenever a plugin is deactivated. This should essentially "hide"
      * the plugin from view by removing templates/template changes etc.
@@ -348,13 +341,12 @@ if (!function_exists('absencemanager_deactivate')) {
      * the plugin is active.
      *
      * @global mixed $db
-     * @global mixed $mybb
      *
      * @return void
      */
     function absencemanager_deactivate()
     {
-        global $db, $mybb;
+        global $db;
 
         require MYBB_ROOT . '/inc/adminfunctions_templates.php';
 
@@ -374,7 +366,6 @@ if (!function_exists('absencemanager_deactivate')) {
 }
 
 if (!function_exists('convert_native_awaysettings')) {
-
     /**
      * Convert the native away settings into absence items.
      *
@@ -394,8 +385,7 @@ if (!function_exists('convert_native_awaysettings')) {
         );
 
         // Convert the away settings of each user
-        while($user = $db->fetch_array($query))
-        {
+        while ($user = $db->fetch_array($query)) {
             // Find the current absence
             $absence = find_current_absence($user['uid'], $user['awaydate']);
 
@@ -440,7 +430,6 @@ if (!function_exists('convert_native_awaysettings')) {
  */
 
 if (!function_exists('is_user_absence')) {
-
     /**
      * Check if a user is absence.
      *
@@ -464,7 +453,6 @@ if (!function_exists('is_user_absence')) {
 }
 
 if (!function_exists('find_current_absence')) {
-
     /**
      * Find the current absence.
      *
@@ -486,8 +474,9 @@ if (!function_exists('find_current_absence')) {
         $query = $db->simple_select(
             'userabsences', '*',
             'user_id = ' . (int) $userId . ' AND '
-            . ' end >= ' . (int) $timestamp . ' AND '
-            . ' start <= ' . (int) $timestamp . ' ', array('limit' => 1)
+            . ' end >= '.(int) $timestamp . ' AND '
+            . ' start <= '.(int) $timestamp . ' ',
+            array('limit' => 1)
         );
 
         return $db->fetch_array($query);
@@ -495,7 +484,6 @@ if (!function_exists('find_current_absence')) {
 }
 
 if (!function_exists('add_new_absence')) {
-
     /**
      * Add a new absence.
      *
@@ -524,7 +512,6 @@ if (!function_exists('add_new_absence')) {
 }
 
 if (!function_exists('update_absence')) {
-
     /**
      * Update an existing absence.
      *
@@ -558,7 +545,6 @@ if (!function_exists('update_absence')) {
  */
 
 if (!function_exists('save_absence_by_native_away_setting')) {
-
     /**
      * Create or update an absence entry by the native away profile settings.
      *
@@ -574,7 +560,8 @@ if (!function_exists('save_absence_by_native_away_setting')) {
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
-            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            || $mybb->settings['absencemanager_replace_native_away'] == 0
+        ) {
             return;
         }
 
@@ -619,7 +606,6 @@ if (!function_exists('save_absence_by_native_away_setting')) {
 }
 
 if (!function_exists('finish_absence_by_native_away_setting')) {
-
     /**
      * Finish an existing absence if the user selected not be be away in
      * the native profile settings.
@@ -636,7 +622,8 @@ if (!function_exists('finish_absence_by_native_away_setting')) {
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
-            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            || $mybb->settings['absencemanager_replace_native_away'] == 0
+        ) {
             return;
         }
 
@@ -660,15 +647,14 @@ if (!function_exists('finish_absence_by_native_away_setting')) {
 }
 
 if (!function_exists('add_absence_profile_info')) {
-
     /**
      * Add the absence info to the profile using the $awaybit placeholder.
      *
      * @global mixed   $mybb
-     * @global string  $awaybit
      * @global mixed   $templates
-     * @global mixed   $lang
      * @global integer $uid
+     * @global string  $awaybit
+     * @global mixed   $lang
      *
      * @return void
      */
@@ -682,7 +668,8 @@ if (!function_exists('add_absence_profile_info')) {
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
-            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            || $mybb->settings['absencemanager_replace_native_away'] == 0
+        ) {
             return;
         }
 
@@ -705,7 +692,6 @@ if (!function_exists('add_absence_profile_info')) {
 }
 
 if (!function_exists('change_away_section_content')) {
-
     /**
      * Change the away section in the user CP.
      *
@@ -721,7 +707,8 @@ if (!function_exists('change_away_section_content')) {
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
-            || $mybb->settings['absencemanager_replace_native_away'] == 0) {
+            || $mybb->settings['absencemanager_replace_native_away'] == 0
+        ) {
             return;
         }
 
@@ -730,7 +717,6 @@ if (!function_exists('change_away_section_content')) {
 }
 
 if (!function_exists('show_absence_table_on_index')) {
-
     /**
      * Show the absence table on the index page.
      *
@@ -746,7 +732,8 @@ if (!function_exists('show_absence_table_on_index')) {
 
         // Check if the plugin should replace the native away settings
         if ($mybb->settings['absencemanager_enable'] == 0
-            || $mybb->settings['absencemanager_show_on_index'] == 0) {
+            || $mybb->settings['absencemanager_show_on_index'] == 0
+        ) {
             return;
         }
 
@@ -755,7 +742,6 @@ if (!function_exists('show_absence_table_on_index')) {
 }
 
 if (!function_exists('build_absence_table')) {
-
     /**
      * Build the absence table.
      *
@@ -776,14 +762,13 @@ if (!function_exists('build_absence_table')) {
         global $theme; // Used in templates
 
         // Check if the plugin should replace the native away settings
-        if ($mybb->settings['absencemanager_enable'] == 0)
-        {
+        if ($mybb->settings['absencemanager_enable'] == 0) {
             return;
         }
 
         // Define the current time if not yet defined by MyBB
         defined('TIME_NOW') || define('TIME_NOW', time());
-        
+
         // Load language used by this plugin
         $lang->load("absencemanager");
 
@@ -855,7 +840,7 @@ if (!function_exists('build_absence_table')) {
             eval("\$absence_rows .= \"" . $templates->get("absencemanager_table_row") . "\";");
         }
         eval("\$absence_table = \"" . $templates->get("absencemanager_table") . "\";");
-        
+
         return $absence_table;
     }
 }
